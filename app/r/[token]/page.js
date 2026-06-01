@@ -9,6 +9,7 @@ export default function Rate() {
   const [i, setI] = useState(0);
   const [votes, setVotes] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [submitErr, setSubmitErr] = useState("");
 
   useEffect(() => {
     fetch(`/api/sessions/${token}`)
@@ -38,7 +39,9 @@ export default function Rate() {
 
   async function vote(liked) {
     const im = deck[i];
-    const next = [...votes, { url: im.url, styles: im.styles, attrs: im.attrs, liked }];
+    // Send only the image id + verdict — keeps the request small even when
+    // images are large uploaded files. The server has the tags already.
+    const next = [...votes, { id: im.id, liked }];
     setVotes(next);
     if (i + 1 >= total) return submit(next);
     setI(i + 1);
@@ -46,17 +49,35 @@ export default function Rate() {
 
   async function submit(allVotes) {
     setSubmitting(true);
-    const res = await fetch("/api/results", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, votes: allVotes }),
-    });
-    const d = await res.json();
-    if (d.id) router.push(`/results/${d.id}`);
-    else setSubmitting(false);
+    setSubmitErr("");
+    try {
+      const res = await fetch("/api/results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, votes: allVotes }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.id) {
+        router.push(`/results/${d.id}`);
+        return;
+      }
+      setSubmitErr(d.error || "Couldn’t save your results. Please try again.");
+    } catch {
+      setSubmitErr("Network problem saving your results. Please try again.");
+    }
+    setSubmitting(false);
   }
 
   if (submitting) return <div className="center"><p className="lead">Building your style profile…</p></div>;
+  if (submitErr) return (
+    <div className="center">
+      <div className="card">
+        <h1 style={{ marginTop: 0 }}>Almost there</h1>
+        <p className="err">{submitErr}</p>
+        <button className="btn" onClick={() => submit(votes)}>Try again</button>
+      </div>
+    </div>
+  );
 
   const im = deck[i];
   return (
