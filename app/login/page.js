@@ -1,8 +1,16 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Login() {
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="center"><p className="lead">Loading…</p></div>}>
+      <Login />
+    </Suspense>
+  );
+}
+
+function Login() {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
