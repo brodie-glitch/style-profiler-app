@@ -39,8 +39,6 @@ export default function Rate() {
 
   async function vote(liked) {
     const im = deck[i];
-    // Send only the image id + verdict — keeps the request small even when
-    // images are large uploaded files. The server has the tags already.
     const next = [...votes, { id: im.id, liked }];
     setVotes(next);
     if (i + 1 >= total) return submit(next);
