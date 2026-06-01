@@ -1,0 +1,44 @@
+// Uses Postgres (e.g. a free Neon database). Set DATABASE_URL to your
+// connection string. Tables are created automatically on each deploy.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  url       String   // hosted URL or data: URL (uploaded files stored as base64)
+  styles    String   // JSON array of style tags
+  attrs     String   // JSON array of attribute tags
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  clientName String?
+  createdAt  DateTime @default(now())
+  result     Result?
+}
+
+model Result {
+  id         String   @id @default(cuid())
+  sessionId  String   @unique
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  clientName String?
+  profile    String   // JSON: { styles:[{name,pct}], attrs:[{name,pct}] }
+  liked      String   // JSON array of liked image URLs
+  ratedCount Int
+  likedCount Int
+  createdAt  DateTime @default(now())
+}
+
+model Setting {
+  id           Int @id @default(1)
+  ratingsCount Int @default(30)
+}
